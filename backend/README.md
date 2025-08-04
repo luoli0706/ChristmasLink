@@ -1,20 +1,43 @@
-# Christmas Link Backend
+# Christmas Link Backend 🎄
 
-基于 **Golang + Gin + SQLite** 的圣诞匹配池系统后端API。
+基于 Go + Gin + SQLite + Redis 的圣诞节匹配系统后端服务。
+
+## ✨ 功能特性
+
+- 🎯 **匹配池管理** - 创建和管理多个匹配池
+- 👥 **用户参与** - 用户可以加入匹配池并填写信息
+- 🎲 **随机匹配** - 智能的随机配对算法
+- 📊 **历史记录** - 完整的匹配历史查询
+- ⚡ **Redis 缓存** - 高性能缓存机制
+- 📱 **RESTful API** - 标准的 API 接口设计
+- 🔄 **自动降级** - Redis 不可用时自动降级
+
+## 🛠️ 技术栈
+
+- **后端框架**: Gin (Go)
+- **数据库**: SQLite + GORM
+- **缓存**: Redis
+- **API**: RESTful
+- **数据格式**: JSON
 
 ## 🚀 快速开始
+
+### 环境要求
+
+- Go 1.21 或更高版本
+- Redis 服务器 (可选，用于缓存)
 
 ### 方式1: 使用启动脚本 (推荐)
 
 **Windows:**
 ```bash
-start.bat
+start_with_redis.bat
 ```
 
 **Linux/Mac:**
 ```bash
-chmod +x start.sh
-./start.sh
+chmod +x start_with_redis.sh
+./start_with_redis.sh
 ```
 
 ### 方式2: 手动启动
@@ -26,6 +49,12 @@ go mod tidy
 # 启动服务
 go run main.go
 ```
+
+### 配置 Redis (可选)
+
+详细的 Redis 安装和配置说明请参考：[REDIS_SETUP.md](./REDIS_SETUP.md)
+
+如果没有安装 Redis，系统会自动降级使用数据库缓存，功能不受影响。
 
 ## 📡 API端点
 
