@@ -1,0 +1,44 @@
+# 二进制文件
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试二进制文件
+*.test
+
+# 输出目录
+/bin/
+/pkg/
+
+# 依赖管理
+/vendor/
+
+# Go工作空间文件
+go.work
+
+# 环境变量文件
+.env
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 日志文件
+*.log
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# Go模块缓存
+go.sum
