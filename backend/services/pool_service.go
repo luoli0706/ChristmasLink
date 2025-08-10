@@ -14,20 +14,22 @@ import (
 
 // PoolService 匹配池服务
 type PoolService struct {
-	db           *gorm.DB
-	cacheService *cache.CacheService
+	db            *gorm.DB
+	cacheService  *cache.CacheService
+	randomService *RandomService
 }
 
 // NewPoolService 创建匹配池服务实例
 func NewPoolService(db *gorm.DB) *PoolService {
 	return &PoolService{
-		db:           db,
-		cacheService: cache.NewCacheService(),
+		db:            db,
+		cacheService:  cache.NewCacheService(),
+		randomService: NewRandomService(),
 	}
 }
 
 // CreatePool 创建匹配池
-func (s *PoolService) CreatePool(req *models.CreatePoolRequest) (*models.MatchPool, error) {
+func (s *PoolService) CreatePool(req *models.CreatePoolRequest) (*models.PoolResponse, error) {
 	pool := &models.MatchPool{
 		Name:        req.Name,
 		Description: req.Description,
@@ -58,8 +60,19 @@ func (s *PoolService) CreatePool(req *models.CreatePoolRequest) (*models.MatchPo
 	// 清除相关缓存
 	s.cacheService.Delete(cache.CacheKeyPools)
 
+	// 构建响应格式
+	response := &models.PoolResponse{
+		ID:          pool.ID,
+		Name:        pool.Name,
+		Description: pool.Description,
+		UserCount:   0, // 新创建的池用户数为0
+		ValidUntil:  pool.ValidUntil.Format("2006-01-02 15:04:05"),
+		Status:      pool.Status,
+		Fields:      pool.Fields,
+	}
+
 	log.Printf("✅ 创建匹配池成功: %s (ID: %d)", pool.Name, pool.ID)
-	return pool, nil
+	return response, nil
 }
 
 // GetPools 获取所有匹配池（带缓存）
@@ -258,16 +271,29 @@ func (s *PoolService) StartMatch(req *models.StartMatchRequest) (*models.MatchRe
 	return result, nil
 }
 
-// performMatching 执行随机匹配算法
+// performMatching 执行随机匹配算法（使用 random.org）
 func (s *PoolService) performMatching(users []models.PoolUser) []models.MatchPair {
-	// 随机打乱用户顺序
-	rand.Seed(time.Now().UnixNano())
-	shuffled := make([]models.PoolUser, len(users))
-	copy(shuffled, users)
+	// 使用真随机数打乱用户列表
+	userInterfaces := make([]interface{}, len(users))
+	for i, user := range users {
+		userInterfaces[i] = user
+	}
 
-	for i := len(shuffled) - 1; i > 0; i-- {
-		j := rand.Intn(i + 1)
-		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	// 使用 random.org 提供的真随机数进行打乱
+	if err := s.randomService.ShuffleSlice(userInterfaces); err != nil {
+		log.Printf("⚠️ 使用 random.org 打乱失败，使用本地随机数: %v", err)
+		// 如果 random.org 失败，使用本地随机数作为备选
+		rand.Seed(time.Now().UnixNano())
+		for i := len(userInterfaces) - 1; i > 0; i-- {
+			j := rand.Intn(i + 1)
+			userInterfaces[i], userInterfaces[j] = userInterfaces[j], userInterfaces[i]
+		}
+	}
+
+	// 转换回用户列表
+	shuffled := make([]models.PoolUser, len(users))
+	for i, userInterface := range userInterfaces {
+		shuffled[i] = userInterface.(models.PoolUser)
 	}
 
 	var pairs []models.MatchPair
@@ -316,6 +342,7 @@ func (s *PoolService) performMatching(users []models.PoolUser) []models.MatchPai
 		pairs = append(pairs, pair)
 	}
 
+	log.Printf("🎲 使用真随机数完成用户匹配，总用户: %d，配对数: %d", len(users), len(pairs))
 	return pairs
 }
 

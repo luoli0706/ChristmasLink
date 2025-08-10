@@ -1,188 +1,213 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 import '../styles/History.css';
 
 interface MatchRecord {
   id: number;
-  poolName: string;
-  matchDate: string;
-  totalUsers: number;
-  pairsCount: number;
-  hasLoneUser: boolean;
+  pool_name: string;
+  match_date: string;
+  total_users: number;
+  pairs_count: number;
+  has_lone_user: boolean;
   status: 'completed' | 'in_progress';
+}
+
+interface MatchPair {
+  pair_number: number;
+  user1_name: string;
+  user2_name?: string;
+  user1_cn: string;
+  user2_cn?: string;
+  user1_filename: string;
+  user2_filename?: string;
+}
+
+interface MatchDetails {
+  pairs: MatchPair[];
 }
 
 const History: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<MatchRecord | null>(null);
+  const [records, setRecords] = useState<MatchRecord[]>([]);
+  const [matchDetails, setMatchDetails] = useState<MatchDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // æ¨¡æ‹Ÿå†å²åŒ¹é…è®°å½•
-  const mockRecords: MatchRecord[] = [
-    {
-      id: 1,
-      poolName: 'åœ£è¯éŸ³ä¹åˆ†äº«',
-      matchDate: '2024-12-20T15:30:00',
-      totalUsers: 12,
-      pairsCount: 6,
-      hasLoneUser: false,
-      status: 'completed'
-    },
-    {
-      id: 2,
-      poolName: 'åœ£è¯ç¥ç¦å¡ç‰‡',
-      matchDate: '2024-12-19T09:15:00',
-      totalUsers: 7,
-      pairsCount: 3,
-      hasLoneUser: true,
-      status: 'completed'
-    },
-    {
-      id: 3,
-      poolName: 'åœ£è¯ç¤¼ç‰©äº¤æ¢',
-      matchDate: '2024-12-18T14:45:00',
-      totalUsers: 10,
-      pairsCount: 5,
-      hasLoneUser: false,
-      status: 'completed'
-    }
-  ];
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
-  // æ¨¡æ‹Ÿè¯¦ç»†åŒ¹é…ç»“æœ
-  const getMatchDetails = (recordId: number) => {
-    // è¿™é‡Œåº”è¯¥ä»åç«¯è·å–è¯¦ç»†æ•°æ®
-    const mockDetails = {
-      1: {
-        pairs: [
-          { pair: 1, user1: 'å°æ˜', user2: 'å°çº¢', user1Data: { cn: 'Ming', filename: 'jingle_bells.mp3' }, user2Data: { cn: 'Hong', filename: 'silent_night.mp3' } },
-          { pair: 2, user1: 'å°æ', user2: 'å°ç‹', user1Data: { cn: 'Li', filename: 'christmas_tree.mp3' }, user2Data: { cn: 'Wang', filename: 'santa_claus.mp3' } },
-          { pair: 3, user1: 'å°å¼ ', user2: 'å°åˆ˜', user1Data: { cn: 'Zhang', filename: 'joy_to_world.mp3' }, user2Data: { cn: 'Liu', filename: 'deck_the_halls.mp3' } },
-          { pair: 4, user1: 'å°é™ˆ', user2: 'å°èµµ', user1Data: { cn: 'Chen', filename: 'white_christmas.mp3' }, user2Data: { cn: 'Zhao', filename: 'rudolf.mp3' } },
-          { pair: 5, user1: 'å°å­™', user2: 'å°å‘¨', user1Data: { cn: 'Sun', filename: 'let_it_snow.mp3' }, user2Data: { cn: 'Zhou', filename: 'winter_wonderland.mp3' } },
-          { pair: 6, user1: 'å°å´', user2: 'å°éƒ‘', user1Data: { cn: 'Wu', filename: 'frosty.mp3' }, user2Data: { cn: 'Zheng', filename: 'carol_bells.mp3' } }
-        ]
-      },
-      2: {
-        pairs: [
-          { pair: 1, user1: 'ç”¨æˆ·A', user2: 'ç”¨æˆ·B', user1Data: { cn: 'UserA', filename: 'card1.jpg' }, user2Data: { cn: 'UserB', filename: 'card2.jpg' } },
-          { pair: 2, user1: 'ç”¨æˆ·C', user2: 'ç”¨æˆ·D', user1Data: { cn: 'UserC', filename: 'card3.jpg' }, user2Data: { cn: 'UserD', filename: 'card4.jpg' } },
-          { pair: 3, user1: 'ç”¨æˆ·E', user2: 'ç”¨æˆ·F', user1Data: { cn: 'UserE', filename: 'card5.jpg' }, user2Data: { cn: 'UserF', filename: 'card6.jpg' } },
-          { pair: 4, user1: 'ç”¨æˆ·G', user2: null, user1Data: { cn: 'UserG', filename: 'card7.jpg' }, user2Data: null }
-        ]
-      },
-      3: {
-        pairs: [
-          { pair: 1, user1: 'å‚ä¸è€…1', user2: 'å‚ä¸è€…2', user1Data: { cn: 'P1', filename: 'gift1.txt' }, user2Data: { cn: 'P2', filename: 'gift2.txt' } },
-          { pair: 2, user1: 'å‚ä¸è€…3', user2: 'å‚ä¸è€…4', user1Data: { cn: 'P3', filename: 'gift3.txt' }, user2Data: { cn: 'P4', filename: 'gift4.txt' } },
-          { pair: 3, user1: 'å‚ä¸è€…5', user2: 'å‚ä¸è€…6', user1Data: { cn: 'P5', filename: 'gift5.txt' }, user2Data: { cn: 'P6', filename: 'gift6.txt' } },
-          { pair: 4, user1: 'å‚ä¸è€…7', user2: 'å‚ä¸è€…8', user1Data: { cn: 'P7', filename: 'gift7.txt' }, user2Data: { cn: 'P8', filename: 'gift8.txt' } },
-          { pair: 5, user1: 'å‚ä¸è€…9', user2: 'å‚ä¸è€…10', user1Data: { cn: 'P9', filename: 'gift9.txt' }, user2Data: { cn: 'P10', filename: 'gift10.txt' } }
-        ]
+  const fetchHistory = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/api/history`);
+      if (response.ok) {
+        const data = await response.json();
+        setRecords(data);
+      } else {
+        setError('»ñÈ¡ÀúÊ·¼ÇÂ¼Ê§°Ü');
       }
-    };
-    return mockDetails[recordId as keyof typeof mockDetails] || { pairs: [] };
+    } catch (err) {
+      setError('ÍøÂç´íÎó£¬ÇëÉÔºóÖØÊÔ');
+      console.error('»ñÈ¡ÀúÊ·¼ÇÂ¼Ê§°Ü:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleViewDetails = (record: MatchRecord) => {
+  const fetchMatchDetails = async (recordId: number): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/history/${recordId}/details`);
+      if (response.ok) {
+        const data = await response.json();
+        setMatchDetails(data);
+      } else {
+        console.error('»ñÈ¡ÏêÇéÊ§°Ü');
+        setMatchDetails({ pairs: [] });
+      }
+    } catch (err) {
+      console.error('»ñÈ¡Æ¥ÅäÏêÇéÊ§°Ü:', err);
+      setMatchDetails({ pairs: [] });
+    }
+  };
+
+  const handleViewDetails = async (record: MatchRecord) => {
     setSelectedRecord(record);
+    await fetchMatchDetails(record.id);
   };
 
   const exportRecord = (record: MatchRecord) => {
-    const details = getMatchDetails(record.id);
     const exportData = {
-      poolName: record.poolName,
-      matchDate: record.matchDate,
-      totalUsers: record.totalUsers,
-      pairs: details.pairs
+      poolName: record.pool_name,
+      matchDate: record.match_date,
+      totalUsers: record.total_users,
+      pairs: matchDetails?.pairs || []
     };
     
-    // åˆ›å»ºå¹¶ä¸‹è½½JSONæ–‡ä»¶
+    // ´´½¨²¢ÏÂÔØJSONÎÄ¼ş
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `match_record_${record.id}_${record.poolName}.json`;
+    link.download = `match_record_${record.id}_${record.pool_name}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
+  if (loading) {
+    return (
+      <div className="history-container">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <h3>¼ÓÔØÖĞ...</h3>
+          <p>ÕıÔÚ»ñÈ¡ÀúÊ·¼ÇÂ¼</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="history-container">
+        <div className="error-state">
+          <div className="error-icon"></div>
+          <h3>¼ÓÔØÊ§°Ü</h3>
+          <p>{error}</p>
+          <button onClick={fetchHistory} className="retry-btn">ÖØÊÔ</button>
+        </div>
+      </div>
+    );
+  }
+
   if (selectedRecord) {
-    const details = getMatchDetails(selectedRecord.id);
-    
     return (
       <div className="history-container">
         <div className="detail-header">
           <button 
             className="back-btn"
-            onClick={() => setSelectedRecord(null)}
+            onClick={() => {
+              setSelectedRecord(null);
+              setMatchDetails(null);
+            }}
           >
-            â† è¿”å›åˆ—è¡¨
+             ·µ»ØÁĞ±í
           </button>
-          <h2>{selectedRecord.poolName} - åŒ¹é…è¯¦æƒ…</h2>
+          <h2>{selectedRecord.pool_name} - Æ¥ÅäÏêÇé</h2>
           <button 
             className="export-btn"
             onClick={() => exportRecord(selectedRecord)}
           >
-            ğŸ“„ å¯¼å‡ºè®°å½•
+             µ¼³ö¼ÇÂ¼
           </button>
         </div>
         
         <div className="detail-info">
           <div className="info-grid">
             <div className="info-item">
-              <span className="info-label">åŒ¹é…æ—¶é—´:</span>
-              <span className="info-value">{new Date(selectedRecord.matchDate).toLocaleString()}</span>
+              <span className="info-label">Æ¥ÅäÊ±¼ä:</span>
+              <span className="info-value">{new Date(selectedRecord.match_date).toLocaleString()}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">å‚ä¸äººæ•°:</span>
-              <span className="info-value">{selectedRecord.totalUsers}</span>
+              <span className="info-label">²ÎÓëÈËÊı:</span>
+              <span className="info-value">{selectedRecord.total_users}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">é…å¯¹æ•°é‡:</span>
-              <span className="info-value">{selectedRecord.pairsCount}</span>
+              <span className="info-label">Åä¶ÔÊıÁ¿:</span>
+              <span className="info-value">{selectedRecord.pairs_count}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">è½®ç©ºæƒ…å†µ:</span>
-              <span className="info-value">{selectedRecord.hasLoneUser ? 'æœ‰è½®ç©º' : 'æ— è½®ç©º'}</span>
+              <span className="info-label">ÂÖ¿ÕÇé¿ö:</span>
+              <span className="info-value">{selectedRecord.has_lone_user ? 'ÓĞÂÖ¿Õ' : 'ÎŞÂÖ¿Õ'}</span>
             </div>
           </div>
         </div>
         
         <div className="pairs-detail">
-          <h3>é…å¯¹è¯¦æƒ…</h3>
-          <div className="pairs-list">
-            {details.pairs.map((pair: any) => (
-              <div key={pair.pair} className="pair-detail-card">
-                <div className="pair-header">
-                  <h4>é…å¯¹ {pair.pair}</h4>
-                </div>
-                <div className="pair-content">
-                  <div className="user-detail">
-                    <h5>{pair.user1}</h5>
-                    <div className="user-data">
-                      <p><strong>CN:</strong> {pair.user1Data.cn}</p>
-                      <p><strong>æ–‡ä»¶:</strong> {pair.user1Data.filename}</p>
-                    </div>
+          <h3>Åä¶ÔÏêÇé</h3>
+          {matchDetails ? (
+            <div className="pairs-list">
+              {matchDetails.pairs.map((pair) => (
+                <div key={pair.pair_number} className="pair-detail-card">
+                  <div className="pair-header">
+                    <h4>Åä¶Ô {pair.pair_number}</h4>
                   </div>
-                  
-                  {pair.user2 ? (
-                    <>
-                      <div className="pair-arrow">â†”ï¸</div>
-                      <div className="user-detail">
-                        <h5>{pair.user2}</h5>
-                        <div className="user-data">
-                          <p><strong>CN:</strong> {pair.user2Data.cn}</p>
-                          <p><strong>æ–‡ä»¶:</strong> {pair.user2Data.filename}</p>
-                        </div>
+                  <div className="pair-content">
+                    <div className="user-detail">
+                      <h5>{pair.user1_name}</h5>
+                      <div className="user-data">
+                        <p><strong>CN:</strong> {pair.user1_cn}</p>
+                        <p><strong>ÎÄ¼ş:</strong> {pair.user1_filename}</p>
                       </div>
-                    </>
-                  ) : (
-                    <div className="user-alone">
-                      <span>ğŸ„ è½®ç©º (å¥‡æ•°å‚ä¸è€…)</span>
                     </div>
-                  )}
+                    
+                    {pair.user2_name ? (
+                      <>
+                        <div className="pair-arrow"></div>
+                        <div className="user-detail">
+                          <h5>{pair.user2_name}</h5>
+                          <div className="user-data">
+                            <p><strong>CN:</strong> {pair.user2_cn}</p>
+                            <p><strong>ÎÄ¼ş:</strong> {pair.user2_filename}</p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="user-alone">
+                        <span> ÂÖ¿Õ (ÆæÊı²ÎÓëÕß)</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>¼ÓÔØÅä¶ÔÏêÇéÖĞ...</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -190,41 +215,41 @@ const History: React.FC = () => {
 
   return (
     <div className="history-container">
-      <h2>å†å²åŒ¹é…è®°å½•</h2>
+      <h2>ÀúÊ·Æ¥Åä¼ÇÂ¼</h2>
       
       <div className="records-list">
-        {mockRecords.length === 0 ? (
+        {records.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">ğŸ“­</div>
-            <h3>æš‚æ— åŒ¹é…è®°å½•</h3>
-            <p>è¿˜æ²¡æœ‰è¿›è¡Œè¿‡ä»»ä½•åŒ¹é…</p>
+            <div className="empty-icon"></div>
+            <h3>ÔİÎŞÆ¥Åä¼ÇÂ¼</h3>
+            <p>»¹Ã»ÓĞ½øĞĞ¹ıÈÎºÎÆ¥Åä</p>
           </div>
         ) : (
           <div className="records-grid">
-            {mockRecords.map(record => (
+            {records.map(record => (
               <div key={record.id} className="record-card">
                 <div className="record-header">
-                  <h3>{record.poolName}</h3>
+                  <h3>{record.pool_name}</h3>
                   <span className={`record-status ${record.status}`}>
-                    {record.status === 'completed' ? 'å·²å®Œæˆ' : 'è¿›è¡Œä¸­'}
+                    {record.status === 'completed' ? 'ÒÑÍê³É' : '½øĞĞÖĞ'}
                   </span>
                 </div>
                 
                 <div className="record-info">
                   <div className="info-row">
-                    <span className="info-label">åŒ¹é…æ—¶é—´:</span>
+                    <span className="info-label">Æ¥ÅäÊ±¼ä:</span>
                     <span className="info-value">
-                      {new Date(record.matchDate).toLocaleDateString()}
+                      {new Date(record.match_date).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">å‚ä¸äººæ•°:</span>
-                    <span className="info-value">{record.totalUsers}</span>
+                    <span className="info-label">²ÎÓëÈËÊı:</span>
+                    <span className="info-value">{record.total_users}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">é…å¯¹æ•°é‡:</span>
+                    <span className="info-label">Åä¶ÔÊıÁ¿:</span>
                     <span className="info-value">
-                      {record.pairsCount} {record.hasLoneUser && '(å«è½®ç©º)'}
+                      {record.pairs_count} {record.has_lone_user && '(º¬ÂÖ¿Õ)'}
                     </span>
                   </div>
                 </div>
@@ -234,13 +259,13 @@ const History: React.FC = () => {
                     className="view-btn"
                     onClick={() => handleViewDetails(record)}
                   >
-                    æŸ¥çœ‹è¯¦æƒ…
+                    ²é¿´ÏêÇé
                   </button>
                   <button 
                     className="export-btn"
                     onClick={() => exportRecord(record)}
                   >
-                    å¯¼å‡º
+                    µ¼³ö
                   </button>
                 </div>
               </div>

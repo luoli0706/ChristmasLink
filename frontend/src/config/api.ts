@@ -14,6 +14,10 @@ export const API_ENDPOINTS = {
   // 历史记录
   HISTORY: '/api/history',
   HISTORY_BY_ID: (id: string) => `/api/history/${id}`,
+  
+  // 用户管理
+  SEARCH_USER: '/api/users/search',
+  REMOVE_USER: (id: string) => `/api/users/${id}`,
 } as const;
 
 // HTTP 请求辅助函数
@@ -79,4 +83,16 @@ export const api = {
     
   getHistoryById: (id: string) => 
     apiRequest(API_ENDPOINTS.HISTORY_BY_ID(id)),
+
+  // 用户管理
+  searchUser: (contactInfo: string) => 
+    apiRequest(API_ENDPOINTS.SEARCH_USER, {
+      method: 'POST',
+      body: JSON.stringify({ contactInfo }),
+    }),
+    
+  removeUser: (id: string) => 
+    apiRequest(API_ENDPOINTS.REMOVE_USER(id), {
+      method: 'DELETE',
+    }),
 };

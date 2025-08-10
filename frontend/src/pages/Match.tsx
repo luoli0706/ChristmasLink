@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../config/api';
 import '../styles/Match.css';
 
 interface MatchPool {
@@ -10,79 +11,80 @@ interface MatchPool {
   status: 'active' | 'expired' | 'matched';
 }
 
-const Match: React.FC = () => {
-  const [selectedPool, setSelectedPool] = useState<MatchPool | null>(null);
-  const [isMatching, setIsMatching] = useState(false);
-  const [matchResult, setMatchResult] = useState<any>(null);
+interface MatchPair {
+  pair: number;
+  user1: string;
+  user2?: string;
+  user1Data: Record<string, any>;
+  user2Data?: Record<string, any>;
+}
 
-  // 模拟匹配池列表
-  const mockPools: MatchPool[] = [
-    {
-      id: 1,
-      name: '圣诞音乐分享',
-      description: '分享你最喜欢的圣诞音乐',
-      userCount: 12,
-      validUntil: '2024-12-25T23:59',
-      status: 'active'
-    },
-    {
-      id: 2,
-      name: '圣诞祝福卡片',
-      description: '交换圣诞祝福卡片',
-      userCount: 8,
-      validUntil: '2024-12-24T18:00',
-      status: 'active'
-    },
-    {
-      id: 3,
-      name: '圣诞礼物交换',
-      description: '秘密圣诞老人礼物交换',
-      userCount: 15,
-      validUntil: '2024-12-20T00:00',
-      status: 'expired'
+interface MatchResult {
+  poolName: string;
+  totalUsers: number;
+  pairs: MatchPair[];
+  timestamp: string;
+}
+
+interface MatchProps {
+  onNavigate: (page: string) => void;
+}
+
+const Match: React.FC<MatchProps> = ({ onNavigate }) => {
+  const [pools, setPools] = useState<MatchPool[]>([]);
+  const [selectedPool, setSelectedPool] = useState<MatchPool | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMatching, setIsMatching] = useState(false);
+  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  useEffect(() => {
+    loadPools();
+  }, []);
+
+  const loadPools = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.getPools();
+      // 只显示活跃且有用户的匹配池
+      const activePools = response.filter((pool: MatchPool) => 
+        pool.status === 'active' && pool.userCount > 0
+      );
+      setPools(activePools);
+    } catch (error) {
+      console.error('获取匹配池列表失败:', error);
+      setMessage({ 
+        type: 'error', 
+        text: '获取匹配池列表失败，请重试' 
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
   const handleStartMatch = async () => {
     if (!selectedPool) return;
     
     setIsMatching(true);
+    setMessage(null);
     
-    // 模拟匹配过程
-    setTimeout(() => {
-      // 模拟匹配结果
-      const pairs = [];
-      const userCount = selectedPool.userCount;
-      const isOdd = userCount % 2 === 1;
+    try {
+      const result = await api.startMatch({ poolId: selectedPool.id });
+      setMatchResult(result);
+      setMessage({ type: 'success', text: '匹配完成！' });
       
-      for (let i = 0; i < Math.floor(userCount / 2); i++) {
-        pairs.push({
-          pair: i + 1,
-          user1: `用户${i * 2 + 1}`,
-          user2: `用户${i * 2 + 2}`,
-          user1Data: { cn: `CN${i * 2 + 1}`, filename: `file${i * 2 + 1}.mp3` },
-          user2Data: { cn: `CN${i * 2 + 2}`, filename: `file${i * 2 + 2}.mp3` }
-        });
-      }
+      // 刷新匹配池列表（状态可能已变更）
+      await loadPools();
       
-      if (isOdd) {
-        pairs.push({
-          pair: pairs.length + 1,
-          user1: `用户${userCount}`,
-          user2: null,
-          user1Data: { cn: `CN${userCount}`, filename: `file${userCount}.mp3` },
-          user2Data: null
-        });
-      }
-      
-      setMatchResult({
-        poolName: selectedPool.name,
-        totalUsers: userCount,
-        pairs: pairs,
-        timestamp: new Date().toLocaleString()
+    } catch (error) {
+      console.error('匹配失败:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error instanceof Error ? error.message : '匹配失败，请重试' 
       });
+    } finally {
       setIsMatching(false);
-    }, 3000);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -182,7 +184,7 @@ const Match: React.FC = () => {
       <div className="pool-selection">
         <h3>选择匹配池</h3>
         <div className="pools-grid">
-          {mockPools.map(pool => (
+          {pools.map(pool => (
             <div 
               key={pool.id} 
               className={`pool-card ${selectedPool?.id === pool.id ? 'selected' : ''} ${pool.status !== 'active' ? 'disabled' : ''}`}

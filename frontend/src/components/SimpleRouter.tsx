@@ -26,6 +26,7 @@ export const SimpleRouter: React.FC<SimpleRouterProps> = ({ children }) => {
   const [params, setParams] = useState<Record<string, string>>({});
 
   const navigate = (path: string, routeParams?: Record<string, string>) => {
+    console.log('Navigation called with path:', path);
     setCurrentPath(path);
     setParams(routeParams || {});
   };

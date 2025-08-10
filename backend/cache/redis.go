@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -15,10 +17,21 @@ var RedisClient *redis.Client
 
 // InitRedis 初始化Redis连接
 func InitRedis() {
+	// 从环境变量获取Redis配置
+	host := getEnvOrDefault("REDIS_HOST", "localhost")
+	port := getEnvIntOrDefault("REDIS_PORT", 6379)
+	password := getEnvOrDefault("REDIS_PASSWORD", "")
+	db := getEnvIntOrDefault("REDIS_DB", 0)
+
+	addr := fmt.Sprintf("%s:%d", host, port)
+
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // Redis地址
-		Password: "",               // 没有密码
-		DB:       0,                // 使用默认数据库
+		Addr:         addr,
+		Password:     password,
+		DB:           db,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
 	})
 
 	// 测试连接
@@ -29,8 +42,26 @@ func InitRedis() {
 		log.Println("💡 请确保Redis服务正在运行，继续使用数据库缓存")
 		RedisClient = nil
 	} else {
-		log.Println("✅ Redis连接成功")
+		log.Printf("✅ Redis连接成功: %s", addr)
 	}
+}
+
+// getEnvOrDefault 获取环境变量或默认值
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvIntOrDefault 获取环境变量整数值或默认值
+func getEnvIntOrDefault(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
+	}
+	return defaultValue
 }
 
 // CacheService 缓存服务结构体

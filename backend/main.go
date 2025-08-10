@@ -41,6 +41,7 @@ func main() {
 	// 创建控制器实例
 	poolController := controllers.NewPoolController(database.GetDB())
 	historyController := controllers.NewHistoryController(database.GetDB())
+	userController := controllers.NewUserController(database.GetDB())
 
 	// 基础健康检查端点
 	r.GET("/", func(c *gin.Context) {
@@ -83,6 +84,13 @@ func main() {
 
 		// 统计信息路由
 		api.GET("/stats", historyController.GetStatistics)
+
+		// 用户管理路由
+		users := api.Group("/users")
+		{
+			users.POST("/search", userController.SearchUsers)
+			users.DELETE("/:id", userController.RemoveUser)
+		}
 	}
 
 	// 优雅关闭处理
@@ -110,6 +118,8 @@ func main() {
 	log.Println("   GET  /api/history      - Get history")
 	log.Println("   GET  /api/history/:id  - Get history by ID")
 	log.Println("   GET  /api/stats        - Get statistics")
+	log.Println("   POST /api/users/search - Search users")
+	log.Println("   DELETE /api/users/:id  - Remove user")
 	log.Println("💡 Redis缓存已启用，提供更快的响应速度")
 
 	if err := r.Run(port); err != nil {
