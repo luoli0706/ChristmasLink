@@ -91,7 +91,7 @@ const History: React.FC<HistoryProps> = () => {
     }
   };
 
-  const handleRecordClick = async (record: MatchRecord) => {
+  const handleViewDetails = async (record: MatchRecord) => {
     setSelectedRecord(record);
     await fetchMatchDetails(record.id);
   };
@@ -104,9 +104,9 @@ const History: React.FC<HistoryProps> = () => {
       pairs: matchDetails?.pairs || []
     };
     
-    // 导出为JSON文件
+    // ����������JSON�ļ�
     const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
@@ -120,8 +120,8 @@ const History: React.FC<HistoryProps> = () => {
       <div className="history-container">
         <div className="loading-state">
           <div className="loading-spinner"></div>
-          <h3>加载中...</h3>
-          <p>正在获取历史记录</p>
+          <h3>������...</h3>
+          <p>���ڻ�ȡ��ʷ��¼</p>
         </div>
       </div>
     );
@@ -132,9 +132,9 @@ const History: React.FC<HistoryProps> = () => {
       <div className="history-container">
         <div className="error-state">
           <div className="error-icon"></div>
-          <h3>加载失败</h3>
+          <h3>����ʧ��</h3>
           <p>{error}</p>
-          <button onClick={fetchHistory} className="retry-btn">重试</button>
+          <button onClick={fetchHistory} className="retry-btn">����</button>
         </div>
       </div>
     );
@@ -151,73 +151,70 @@ const History: React.FC<HistoryProps> = () => {
               setMatchDetails(null);
             }}
           >
-            ← 返回列表
+             �����б�
           </button>
-          <h2>{selectedRecord.pool_name} - 匹配详情</h2>
+          <h2>{selectedRecord.pool_name} - ƥ������</h2>
           <button 
             className="export-btn"
             onClick={() => exportRecord(selectedRecord)}
           >
-            📄 导出记录
+             ������¼
           </button>
         </div>
         
         <div className="detail-info">
           <div className="info-grid">
             <div className="info-item">
-              <span className="info-label">匹配时间:</span>
+              <span className="info-label">ƥ��ʱ��:</span>
               <span className="info-value">{new Date(selectedRecord.match_date).toLocaleString()}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">参与人数:</span>
+              <span className="info-label">��������:</span>
               <span className="info-value">{selectedRecord.total_users}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">配对数量:</span>
+              <span className="info-label">�������:</span>
               <span className="info-value">{selectedRecord.pairs_count}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">单独用户:</span>
-              <span className="info-value">{selectedRecord.has_lone_user ? '有单独' : '无单独'}</span>
+              <span className="info-label">�ֿ����:</span>
+              <span className="info-value">{selectedRecord.has_lone_user ? '���ֿ�' : '���ֿ�'}</span>
             </div>
           </div>
         </div>
         
         <div className="pairs-detail">
-          <h3>配对详情</h3>
+          <h3>�������</h3>
           {matchDetails ? (
             <div className="pairs-list">
               {matchDetails.pairs.map((pair) => (
                 <div key={pair.pair_number} className="pair-detail-card">
                   <div className="pair-header">
-                    <h4>配对 {pair.pair_number}</h4>
+                    <h4>��� {pair.pair_number}</h4>
                   </div>
                   <div className="pair-content">
                     <div className="user-detail">
                       <h5>{pair.user1_name}</h5>
                       <div className="user-data">
-                        <p><strong>姓名:</strong> {pair.user1_cn}</p>
-                        <p><strong>文件:</strong> {pair.user1_filename}</p>
+                        <p><strong>CN:</strong> {pair.user1_cn}</p>
+                        <p><strong>�ļ�:</strong> {pair.user1_filename}</p>
                       </div>
                     </div>
                     
-                    {pair.user2_name && (
+                    {pair.user2_name ? (
                       <>
-                        <div className="pair-connector">💝</div>
+                        <div className="pair-arrow"></div>
                         <div className="user-detail">
                           <h5>{pair.user2_name}</h5>
                           <div className="user-data">
-                            <p><strong>姓名:</strong> {pair.user2_cn}</p>
-                            <p><strong>文件:</strong> {pair.user2_filename}</p>
+                            <p><strong>CN:</strong> {pair.user2_cn}</p>
+                            <p><strong>�ļ�:</strong> {pair.user2_filename}</p>
                           </div>
                         </div>
                       </>
-                    )}
-                    
-                    {!pair.user2_name && (
-                      <div className="lone-user">
-                        <div className="lone-user-indicator">🎄</div>
-                        <p>单独用户</p>
+                    ) : (
+                      <div className="user-alone">
+                        <span> �ֿ� (����������)</span>
                       </div>
                     )}
                   </div>
@@ -225,9 +222,9 @@ const History: React.FC<HistoryProps> = () => {
               ))}
             </div>
           ) : (
-            <div className="loading-pairs">
-              <div className="loading-spinner small"></div>
-              <p>正在加载配对详情...</p>
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>�������������...</p>
             </div>
           )}
         </div>
@@ -237,65 +234,64 @@ const History: React.FC<HistoryProps> = () => {
 
   return (
     <div className="history-container">
-      <div className="history-header">
-        <h2>📚 匹配历史</h2>
-        <button onClick={fetchHistory} className="refresh-btn">
-          🔄 刷新
-        </button>
-      </div>
+      <h2>��ʷƥ���¼</h2>
       
-      {records.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📋</div>
-          <h3>暂无匹配记录</h3>
-          <p>还没有任何匹配记录，快去创建匹配池吧！</p>
-        </div>
-      ) : (
-        <div className="records-list">
-          {records.map((record) => (
-            <div 
-              key={record.id} 
-              className="record-card"
-              onClick={() => handleRecordClick(record)}
-            >
-              <div className="record-header">
-                <h3>{record.pool_name}</h3>
-                <span className={`status-badge ${record.status}`}>
-                  {record.status === 'completed' ? '已完成' : '进行中'}
-                </span>
-              </div>
-              
-              <div className="record-info">
-                <div className="record-meta">
-                  <span className="meta-item">
-                    <span className="meta-icon">👥</span>
-                    {record.total_users} 人参与
+      <div className="records-list">
+        {records.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon"></div>
+            <h3>����ƥ���¼</h3>
+            <p>��û�н��й��κ�ƥ��</p>
+          </div>
+        ) : (
+          <div className="records-grid">
+            {records.map(record => (
+              <div key={record.id} className="record-card">
+                <div className="record-header">
+                  <h3>{record.pool_name}</h3>
+                  <span className={`record-status ${record.status}`}>
+                    {record.status === 'completed' ? '�����' : '������'}
                   </span>
-                  <span className="meta-item">
-                    <span className="meta-icon">💝</span>
-                    {record.pairs_count} 组配对
-                  </span>
-                  {record.has_lone_user && (
-                    <span className="meta-item lone">
-                      <span className="meta-icon">🎄</span>
-                      有单独用户
-                    </span>
-                  )}
                 </div>
                 
-                <div className="record-date">
-                  <span className="date-icon">📅</span>
-                  {new Date(record.match_date).toLocaleString()}
+                <div className="record-info">
+                  <div className="info-row">
+                    <span className="info-label">ƥ��ʱ��:</span>
+                    <span className="info-value">
+                      {new Date(record.match_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">��������:</span>
+                    <span className="info-value">{record.total_users}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">�������:</span>
+                    <span className="info-value">
+                      {record.pairs_count} {record.has_lone_user && '(���ֿ�)'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="record-actions">
+                  <button 
+                    className="view-btn"
+                    onClick={() => handleViewDetails(record)}
+                  >
+                    �鿴����
+                  </button>
+                  <button 
+                    className="export-btn"
+                    onClick={() => exportRecord(record)}
+                  >
+                    ����
+                  </button>
                 </div>
               </div>
-              
-              <div className="record-actions">
-                <span className="view-details">查看详情 →</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

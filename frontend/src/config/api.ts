@@ -1,5 +1,6 @@
 // API 配置
-export const API_BASE_URL = 'http://127.0.0.1:7776';
+const isDevelopment = import.meta.env.DEV;
+export const API_BASE_URL = isDevelopment ? '' : 'http://127.0.0.1:7776';
 
 // API 端点
 export const API_ENDPOINTS = {

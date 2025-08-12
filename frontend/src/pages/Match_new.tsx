@@ -44,26 +44,12 @@ const Match: React.FC<MatchProps> = () => {
   const loadPools = async () => {
     try {
       const response = await api.getPools();
-      
-      // 检查响应格式并提取data字段
-      let poolsData = response;
-      if (response && typeof response === 'object' && 'data' in response) {
-        poolsData = response.data;
-      }
-      
-      // 检查poolsData是否为数组
-      if (Array.isArray(poolsData)) {
-        const activePools = poolsData.filter((pool: MatchPool) => 
-          pool.status === 'active' && pool.userCount > 0
-        );
-        setPools(activePools);
-      } else {
-        console.error('API响应格式错误:', response);
-        setPools([]);
-      }
+      const activePools = response.filter((pool: MatchPool) => 
+        pool.status === 'active' && pool.userCount > 0
+      );
+      setPools(activePools);
     } catch (error) {
       console.error('获取匹配池列表失败:', error);
-      setPools([]);
     }
   };
 
@@ -73,7 +59,7 @@ const Match: React.FC<MatchProps> = () => {
     setIsMatching(true);
     
     try {
-      const result = await api.startMatch({ poolId: selectedPool.id });
+      const result = await api.startMatch(selectedPool.id);
       setMatchResult(result);
     } catch (error) {
       console.error('匹配失败:', error);

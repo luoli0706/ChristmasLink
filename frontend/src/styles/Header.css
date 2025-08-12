@@ -18,6 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 2rem;
 }
 
 .logo {
@@ -26,6 +27,43 @@
   gap: 8px;
   cursor: pointer;
   transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.nav-item.active {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+}
+
+.header-actions {
+  flex-shrink: 0;
 }
 
 .logo:hover {

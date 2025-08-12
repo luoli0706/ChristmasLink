@@ -1,18 +1,15 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNavigate, useCurrentPath } from './Router';
 import '../styles/Header.css';
 
-interface HeaderProps {
-  onNavigate?: (path: string) => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
+const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const currentPath = useCurrentPath();
 
   const handleHomeClick = () => {
-    if (onNavigate) {
-      onNavigate('/');
-    }
+    navigate('/');
   };
 
   return (
@@ -22,6 +19,33 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
           <span className="logo-icon">🎄</span>
           <span className="logo-text">圣诞链接</span>
         </div>
+        
+        <nav className="nav-menu">
+          <button 
+            className={`nav-item ${currentPath === '/' ? 'active' : ''}`}
+            onClick={() => navigate('/')}
+          >
+            🏠 首页
+          </button>
+          <button 
+            className={`nav-item ${currentPath === '/match' ? 'active' : ''}`}
+            onClick={() => navigate('/match')}
+          >
+            🎯 匹配
+          </button>
+          <button 
+            className={`nav-item ${currentPath === '/register' ? 'active' : ''}`}
+            onClick={() => navigate('/register')}
+          >
+            📝 注册
+          </button>
+          <button 
+            className={`nav-item ${currentPath === '/history' ? 'active' : ''}`}
+            onClick={() => navigate('/history')}
+          >
+            📜 历史
+          </button>
+        </nav>
         
         <div className="header-actions">
           <button 

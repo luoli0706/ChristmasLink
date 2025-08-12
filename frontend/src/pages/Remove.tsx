@@ -13,7 +13,12 @@ interface User {
   created_at: string;
 }
 
-const Remove: React.FC = () => {
+interface RemoveProps {
+  onNavigate?: (page: string) => void;
+  onGoBack?: () => void;
+}
+
+const Remove: React.FC<RemoveProps> = ({ onNavigate }) => {
   const [identifier, setIdentifier] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -88,6 +93,7 @@ const Remove: React.FC = () => {
               setUserInfo(null);
               setIdentifier('');
               setError(null);
+              onNavigate?.('/');
             }}
           >
             返回首页

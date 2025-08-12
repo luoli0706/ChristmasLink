@@ -20,10 +20,11 @@ interface MatchPool {
 }
 
 interface RegisterProps {
-  onNavigate: (page: string) => void;
+  onNavigate?: (page: string) => void;
+  onGoBack?: () => void;
 }
 
-const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
+const Register: React.FC<RegisterProps> = () => {
   const [entryType, setEntryType] = useState<'pool' | 'user' | null>(null);
 
   if (entryType === null) {
@@ -141,7 +142,12 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setMessage(null);
     
     try {
-      const response = await api.createPool(poolForm);
+      // 确保时间格式正确
+      const poolData = {
+        ...poolForm,
+        validUntil: new Date(poolForm.validUntil).toISOString()
+      };
+      await api.createPool(poolData);
       setMessage({ type: 'success', text: `匹配池 "${poolForm.name}" 创建成功！` });
       
       // 重置表单
@@ -348,13 +354,42 @@ const JoinPoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     try {
       setIsLoading(true);
       const response = await api.getPools();
-      const activePools = response.filter((pool: MatchPool) => pool.status === 'active');
-      setPools(activePools);
+      
+      // 检查响应格式并提取data字段
+      let poolsData = response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        poolsData = response.data;
+      }
+      
+      // 确保poolsData是数组
+      if (Array.isArray(poolsData)) {
+        const activePools = poolsData.filter((pool: MatchPool) => pool.status === 'active');
+        
+        // 调试：检查每个池的fields字段
+        activePools.forEach((pool, index) => {
+          console.log(`匹配池 ${index + 1} (${pool.name}):`, {
+            id: pool.id,
+            fields: pool.fields,
+            fieldsType: typeof pool.fields,
+            fieldsIsArray: Array.isArray(pool.fields)
+          });
+        });
+        
+        setPools(activePools);
+      } else {
+        console.error('API返回的数据格式错误:', response);
+        setPools([]);
+        setMessage({ 
+          type: 'error', 
+          text: 'API返回数据格式错误' 
+        });
+      }
     } catch (error) {
       console.error('获取匹配池列表失败:', error);
+      setPools([]);
       setMessage({ 
         type: 'error', 
-        text: '获取匹配池列表失败，请重试' 
+        text: error instanceof Error ? error.message : '获取匹配池列表失败，请重试'
       });
     } finally {
       setIsLoading(false);
@@ -363,7 +398,25 @@ const JoinPoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const handlePoolSelect = async (pool: MatchPool) => {
     try {
-      const poolDetail = await api.getPoolById(pool.id.toString());
+      const response = await api.getPoolById(pool.id.toString());
+      
+      // 调试：检查getPoolById返回的数据
+      console.log('getPoolById 原始响应:', response);
+      
+      // 检查响应格式并提取data字段
+      let poolDetail = response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        poolDetail = response.data;
+      }
+      
+      console.log('处理后的 poolDetail:', {
+        id: poolDetail.id,
+        name: poolDetail.name,
+        fields: poolDetail.fields,
+        fieldsType: typeof poolDetail.fields,
+        fieldsIsArray: Array.isArray(poolDetail.fields)
+      });
+      
       setSelectedPool(poolDetail);
       setUserData({});
     } catch (error) {
@@ -385,10 +438,13 @@ const JoinPoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedPool) return;
-    
+    if (!selectedPool || !selectedPool.id) {
+      setMessage({ type: 'error', text: '匹配池信息丢失，请重新选择' });
+      return;
+    }
+
     // 验证必填字段
-    for (const field of selectedPool.fields) {
+    for (const field of (selectedPool.fields || [])) {
       if (field.required && !userData[field.name]) {
         setMessage({ type: 'error', text: `${field.label} 是必填字段` });
         return;
@@ -485,7 +541,7 @@ const JoinPoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <div className="register-container">
       <div className="register-card">
-        <h2>加入匹配池: {selectedPool.name}</h2>
+        <h2>加入匹配池: {selectedPool?.name || '未知匹配池'}</h2>
         
         {message && (
           <div className={`message ${message.type}`}>
@@ -493,11 +549,12 @@ const JoinPoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="register-form">
-          <div className="form-section">
-            <h3>填写信息</h3>
-            
-            {selectedPool.fields.map(field => (
+        {selectedPool && selectedPool.fields ? (
+          <form onSubmit={handleSubmit} className="register-form">
+            <div className="form-section">
+              <h3>填写信息</h3>
+              
+              {(selectedPool.fields || []).map(field => (
               <div key={field.name} className="form-group">
                 <label htmlFor={field.name}>
                   {field.label} {field.required && '*'}
@@ -554,6 +611,17 @@ const JoinPoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </button>
           </div>
         </form>
+        ) : (
+          <div className="error-message">
+            <p>匹配池信息加载失败，请重新选择匹配池。</p>
+            <button 
+              onClick={() => setSelectedPool(null)} 
+              className="btn btn-secondary"
+            >
+              重新选择
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
