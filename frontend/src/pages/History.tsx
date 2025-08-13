@@ -70,7 +70,7 @@ const History: React.FC<HistoryProps> = () => {
 
   const fetchMatchDetails = async (recordId: number): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/history/${recordId}/details`);
+      const response = await fetch(`${API_BASE_URL}/api/history/${recordId}`);
       if (response.ok) {
         const jsonData = await response.json();
         

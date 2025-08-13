@@ -54,7 +54,7 @@ const Match: React.FC<MatchProps> = () => {
       // 检查poolsData是否为数组
       if (Array.isArray(poolsData)) {
         const activePools = poolsData.filter((pool: MatchPool) => 
-          pool.status === 'active' && pool.userCount > 0
+          pool.userCount > 0 // 移除status检查，显示所有有用户的池子
         );
         setPools(activePools);
       } else {
@@ -73,8 +73,16 @@ const Match: React.FC<MatchProps> = () => {
     setIsMatching(true);
     
     try {
-      const result = await api.startMatch({ poolId: selectedPool.id });
-      setMatchResult(result);
+      const response = await api.startMatch({ poolId: selectedPool.id });
+      
+      // 检查响应格式并提取data字段
+      let matchData = response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        matchData = response.data;
+      }
+      
+      console.log('匹配响应数据:', matchData);
+      setMatchResult(matchData);
     } catch (error) {
       console.error('匹配失败:', error);
     } finally {
@@ -99,7 +107,7 @@ const Match: React.FC<MatchProps> = () => {
               </div>
               <div className="stat">
                 <span className="stat-label">配对数量:</span>
-                <span className="stat-value">{matchResult.pairs.length}</span>
+                <span className="stat-value">{matchResult.pairs?.length || 0}</span>
               </div>
             </div>
           </div>
@@ -107,7 +115,7 @@ const Match: React.FC<MatchProps> = () => {
           <div className="pairs-result">
             <h3>配对结果</h3>
             <div className="pairs-list">
-              {matchResult.pairs.map((pair, index) => (
+              {(matchResult.pairs || []).map((pair, index) => (
                 <div key={index} className="pair-card">
                   <div className="pair-header">
                     <h4>配对 {pair.pair}</h4>
@@ -184,7 +192,8 @@ const Match: React.FC<MatchProps> = () => {
               <div className="pool-header">
                 <h4>{pool.name}</h4>
                 <span className={`pool-status ${pool.status}`}>
-                  {pool.status === 'active' ? '活跃' : '已过期'}
+                  {pool.status === 'active' ? '活跃' : 
+                   pool.status === 'matched' ? '已匹配' : '已过期'}
                 </span>
               </div>
               
