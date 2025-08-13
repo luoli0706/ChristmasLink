@@ -4,22 +4,20 @@ import '../styles/History.css';
 
 interface MatchRecord {
   id: number;
-  pool_name: string;
-  match_date: string;
-  total_users: number;
-  pairs_count: number;
-  has_lone_user: boolean;
+  poolName: string;
+  matchDate: string;
+  totalUsers: number;
+  pairsCount: number;
+  hasLoneUser: boolean;
   status: 'completed' | 'in_progress';
 }
 
 interface MatchPair {
-  pair_number: number;
-  user1_name: string;
-  user2_name?: string;
-  user1_cn: string;
-  user2_cn?: string;
-  user1_filename: string;
-  user2_filename?: string;
+  pair: number;
+  user1: string;
+  user2?: string;
+  user1Data: { [key: string]: any };
+  user2Data?: { [key: string]: any };
 }
 
 interface MatchDetails {
@@ -38,6 +36,14 @@ const History: React.FC<HistoryProps> = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 解析时间字符串的辅助函数
+  const parseDateTime = (dateTimeStr: string): Date => {
+    // 后端返回格式: "2006-01-02 15:04:05"
+    // 需要转换为ISO格式: "2006-01-02T15:04:05"
+    const isoString = dateTimeStr.replace(' ', 'T');
+    return new Date(isoString);
+  };
+
   useEffect(() => {
     fetchHistory();
   }, []);
@@ -50,12 +56,16 @@ const History: React.FC<HistoryProps> = () => {
       if (response.ok) {
         const jsonData = await response.json();
         
+        // 调试：打印原始响应
+        console.log('历史记录原始响应:', jsonData);
+        
         // 检查响应格式并提取data字段
         let historyData = jsonData;
         if (jsonData && typeof jsonData === 'object' && 'data' in jsonData) {
           historyData = jsonData.data;
         }
         
+        console.log('处理后的历史数据:', historyData);
         setRecords(historyData || []);
       } else {
         setError('获取历史记录失败');
@@ -74,12 +84,16 @@ const History: React.FC<HistoryProps> = () => {
       if (response.ok) {
         const jsonData = await response.json();
         
+        // 调试：打印匹配详情响应
+        console.log('匹配详情原始响应:', jsonData);
+        
         // 检查响应格式并提取data字段
         let detailsData = jsonData;
         if (jsonData && typeof jsonData === 'object' && 'data' in jsonData) {
           detailsData = jsonData.data;
         }
         
+        console.log('处理后的详情数据:', detailsData);
         setMatchDetails(detailsData || { pairs: [] });
       } else {
         console.error('获取详情失败');
@@ -98,9 +112,9 @@ const History: React.FC<HistoryProps> = () => {
 
   const exportRecord = (record: MatchRecord) => {
     const exportData = {
-      poolName: record.pool_name,
-      matchDate: record.match_date,
-      totalUsers: record.total_users,
+      poolName: record.poolName,
+      matchDate: record.matchDate,
+      totalUsers: record.totalUsers,
       pairs: matchDetails?.pairs || []
     };
     
@@ -110,7 +124,7 @@ const History: React.FC<HistoryProps> = () => {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `match_record_${record.id}_${record.pool_name}.json`;
+    link.download = `match_record_${record.id}_${record.poolName}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -153,7 +167,7 @@ const History: React.FC<HistoryProps> = () => {
           >
             ← 返回列表
           </button>
-          <h2>{selectedRecord.pool_name} - 匹配详情</h2>
+          <h2>{selectedRecord.poolName} - 匹配详情</h2>
           <button 
             className="export-btn"
             onClick={() => exportRecord(selectedRecord)}
@@ -166,19 +180,19 @@ const History: React.FC<HistoryProps> = () => {
           <div className="info-grid">
             <div className="info-item">
               <span className="info-label">匹配时间:</span>
-              <span className="info-value">{new Date(selectedRecord.match_date).toLocaleString()}</span>
+              <span className="info-value">{parseDateTime(selectedRecord.matchDate).toLocaleString()}</span>
             </div>
             <div className="info-item">
               <span className="info-label">参与人数:</span>
-              <span className="info-value">{selectedRecord.total_users}</span>
+              <span className="info-value">{selectedRecord.totalUsers}</span>
             </div>
             <div className="info-item">
               <span className="info-label">配对数量:</span>
-              <span className="info-value">{selectedRecord.pairs_count}</span>
+              <span className="info-value">{selectedRecord.pairsCount}</span>
             </div>
             <div className="info-item">
               <span className="info-label">单独用户:</span>
-              <span className="info-value">{selectedRecord.has_lone_user ? '有单独' : '无单独'}</span>
+              <span className="info-value">{selectedRecord.hasLoneUser ? '有单独' : '无单独'}</span>
             </div>
           </div>
         </div>
@@ -188,33 +202,33 @@ const History: React.FC<HistoryProps> = () => {
           {matchDetails ? (
             <div className="pairs-list">
               {matchDetails.pairs.map((pair) => (
-                <div key={pair.pair_number} className="pair-detail-card">
+                <div key={pair.pair} className="pair-detail-card">
                   <div className="pair-header">
-                    <h4>配对 {pair.pair_number}</h4>
+                    <h4>配对 {pair.pair}</h4>
                   </div>
                   <div className="pair-content">
                     <div className="user-detail">
-                      <h5>{pair.user1_name}</h5>
+                      <h5>{pair.user1}</h5>
                       <div className="user-data">
-                        <p><strong>姓名:</strong> {pair.user1_cn}</p>
-                        <p><strong>文件:</strong> {pair.user1_filename}</p>
+                        {Object.entries(pair.user1Data || {}).map(([key, value]) => (
+                          <p key={key}><strong>{key}:</strong> {String(value)}</p>
+                        ))}
                       </div>
                     </div>
                     
-                    {pair.user2_name && (
+                    {pair.user2 && pair.user2Data ? (
                       <>
                         <div className="pair-connector">💝</div>
                         <div className="user-detail">
-                          <h5>{pair.user2_name}</h5>
+                          <h5>{pair.user2}</h5>
                           <div className="user-data">
-                            <p><strong>姓名:</strong> {pair.user2_cn}</p>
-                            <p><strong>文件:</strong> {pair.user2_filename}</p>
+                            {Object.entries(pair.user2Data).map(([key, value]) => (
+                              <p key={key}><strong>{key}:</strong> {String(value)}</p>
+                            ))}
                           </div>
                         </div>
                       </>
-                    )}
-                    
-                    {!pair.user2_name && (
+                    ) : (
                       <div className="lone-user">
                         <div className="lone-user-indicator">🎄</div>
                         <p>单独用户</p>
@@ -259,7 +273,7 @@ const History: React.FC<HistoryProps> = () => {
               onClick={() => handleRecordClick(record)}
             >
               <div className="record-header">
-                <h3>{record.pool_name}</h3>
+                <h3>{record.poolName}</h3>
                 <span className={`status-badge ${record.status}`}>
                   {record.status === 'completed' ? '已完成' : '进行中'}
                 </span>
@@ -269,13 +283,13 @@ const History: React.FC<HistoryProps> = () => {
                 <div className="record-meta">
                   <span className="meta-item">
                     <span className="meta-icon">👥</span>
-                    {record.total_users} 人参与
+                    {record.totalUsers} 人参与
                   </span>
                   <span className="meta-item">
                     <span className="meta-icon">💝</span>
-                    {record.pairs_count} 组配对
+                    {record.pairsCount} 组配对
                   </span>
-                  {record.has_lone_user && (
+                  {record.hasLoneUser && (
                     <span className="meta-item lone">
                       <span className="meta-icon">🎄</span>
                       有单独用户
@@ -285,7 +299,7 @@ const History: React.FC<HistoryProps> = () => {
                 
                 <div className="record-date">
                   <span className="date-icon">📅</span>
-                  {new Date(record.match_date).toLocaleString()}
+                  {parseDateTime(record.matchDate).toLocaleString()}
                 </div>
               </div>
               

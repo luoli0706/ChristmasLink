@@ -109,7 +109,7 @@ func (s *HistoryService) GetHistoryByID(id uint) (*models.MatchResult, error) {
 // getUserDisplayName 获取用户显示名称
 func (s *HistoryService) getUserDisplayName(userData map[string]interface{}) string {
 	// 按优先级查找显示名称
-	priorities := []string{"name", "姓名", "昵称", "nickname", "username", "用户名"}
+	priorities := []string{"name", "姓名", "昵称", "nickname", "username", "用户名", "cn"}
 
 	for _, key := range priorities {
 		if value, ok := userData[key]; ok {
