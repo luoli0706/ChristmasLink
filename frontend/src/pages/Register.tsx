@@ -68,6 +68,7 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     name: '',
     validUntil: '',
     description: '',
+    cooldownTime: 5, // 默认5秒冷却时间
     fields: [
       {
         name: 'cn',
@@ -174,6 +175,7 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         name: '',
         validUntil: '',
         description: '',
+        cooldownTime: 5,
         fields: [
           {
             name: 'cn',
@@ -243,6 +245,21 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 onChange={(e) => setPoolForm(prev => ({ ...prev, validUntil: e.target.value }))}
                 disabled={isSubmitting}
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="cooldownTime">冷却时间（秒）</label>
+              <input
+                type="number"
+                id="cooldownTime"
+                value={poolForm.cooldownTime}
+                onChange={(e) => setPoolForm(prev => ({ ...prev, cooldownTime: parseInt(e.target.value) || 5 }))}
+                placeholder="重新匹配的冷却时间"
+                min="1"
+                max="3600"
+                disabled={isSubmitting}
+              />
+              <small className="form-hint">匹配后需等待指定时间才能重新匹配，默认5秒</small>
             </div>
           </div>
 

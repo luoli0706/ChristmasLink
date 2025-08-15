@@ -9,6 +9,8 @@ interface MatchPool {
   userCount: number;
   validUntil: string;
   status: 'active' | 'expired' | 'matched';
+  cooldownTime?: number;
+  lastMatchedAt?: string;
 }
 
 interface MatchPair {
@@ -83,8 +85,23 @@ const Match: React.FC<MatchProps> = () => {
       
       console.log('匹配响应数据:', matchData);
       setMatchResult(matchData);
+      
+      // 重新加载匹配池列表以更新状态
+      await loadPools();
     } catch (error) {
       console.error('匹配失败:', error);
+      
+      // 显示具体的错误信息
+      if (error instanceof Error && error.message.includes('冷却')) {
+        alert(error.message);
+      } else if (error instanceof Error && error.message.includes('状态不可用')) {
+        alert('匹配池当前不可用，可能需要等待冷却时间');
+      } else {
+        alert('匹配失败，请稍后重试');
+      }
+      
+      // 重新加载匹配池列表
+      await loadPools();
     } finally {
       setIsMatching(false);
     }
@@ -183,35 +200,76 @@ const Match: React.FC<MatchProps> = () => {
       <div className="pool-selection">
         <h3>选择匹配池</h3>
         <div className="pools-grid">
-          {pools.map(pool => (
-            <div 
-              key={pool.id} 
-              className={`pool-card ${selectedPool?.id === pool.id ? 'selected' : ''} ${pool.status !== 'active' ? 'disabled' : ''}`}
-              onClick={() => pool.status === 'active' && setSelectedPool(pool)}
-            >
-              <div className="pool-header">
-                <h4>{pool.name}</h4>
-                <span className={`pool-status ${pool.status}`}>
-                  {pool.status === 'active' ? '活跃' : 
-                   pool.status === 'matched' ? '已匹配' : '已过期'}
-                </span>
-              </div>
+          {pools.map(pool => {
+            // 计算冷却状态
+            const calculateCooldownStatus = (pool: MatchPool) => {
+              if (pool.status !== 'matched' || !pool.lastMatchedAt) {
+                return { isInCooldown: false, remainingTime: 0 };
+              }
               
-              <div className="pool-info">
-                <p className="pool-description">{pool.description}</p>
-                <div className="pool-stats">
-                  <div className="stat">
-                    <span className="stat-icon">👥</span>
-                    <span>{pool.userCount} 人</span>
+              const lastMatchTime = new Date(pool.lastMatchedAt).getTime();
+              const currentTime = new Date().getTime();
+              const cooldownMs = (pool.cooldownTime || 5) * 1000;
+              const elapsed = currentTime - lastMatchTime;
+              
+              if (elapsed >= cooldownMs) {
+                return { isInCooldown: false, remainingTime: 0 };
+              }
+              
+              return { 
+                isInCooldown: true, 
+                remainingTime: Math.ceil((cooldownMs - elapsed) / 1000) 
+              };
+            };
+
+            const cooldownStatus = calculateCooldownStatus(pool);
+            const canMatch = pool.status === 'active' || !cooldownStatus.isInCooldown;
+
+            return (
+              <div 
+                key={pool.id} 
+                className={`pool-card ${selectedPool?.id === pool.id ? 'selected' : ''} ${!canMatch ? 'disabled' : ''}`}
+                onClick={() => canMatch && setSelectedPool(pool)}
+              >
+                <div className="pool-header">
+                  <h4>{pool.name}</h4>
+                  <span className={`pool-status ${pool.status}`}>
+                    {pool.status === 'active' ? '活跃' : 
+                     pool.status === 'matched' ? 
+                       (cooldownStatus.isInCooldown ? `冷却中 ${cooldownStatus.remainingTime}s` : '可重新匹配') : 
+                     '已过期'}
+                  </span>
+                </div>
+                
+                <div className="pool-info">
+                  <p className="pool-description">{pool.description}</p>
+                  <div className="pool-stats">
+                    <div className="stat">
+                      <span className="stat-icon">👥</span>
+                      <span>{pool.userCount} 人</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-icon">⏰</span>
+                      <span>{new Date(pool.validUntil).toLocaleDateString()}</span>
+                    </div>
+                    {pool.cooldownTime && (
+                      <div className="stat">
+                        <span className="stat-icon">🔄</span>
+                        <span>冷却 {pool.cooldownTime}s</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="stat">
-                    <span className="stat-icon">⏰</span>
-                    <span>{new Date(pool.validUntil).toLocaleDateString()}</span>
-                  </div>
+                  
+                  {cooldownStatus.isInCooldown && (
+                    <div className="cooldown-notice">
+                      <span className="cooldown-icon">❄️</span>
+                      <span>冷却中，还需 {cooldownStatus.remainingTime} 秒</span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {pools.length === 0 && (

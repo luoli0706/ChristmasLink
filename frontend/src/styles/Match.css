@@ -317,6 +317,43 @@
   transform: translateY(-2px);
 }
 
+/* 冷却状态样式 */
+.cooldown-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(52, 152, 219, 0.1);
+  border: 1px solid rgba(52, 152, 219, 0.3);
+  border-radius: 6px;
+  color: #3498db;
+  font-size: 0.9rem;
+}
+
+.cooldown-icon {
+  font-size: 1.1rem;
+}
+
+.pool-status.matched {
+  background: #f39c12;
+}
+
+.pool-card.disabled .cooldown-notice {
+  background: rgba(231, 76, 60, 0.1);
+  border-color: rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
+}
+
+/* 表单提示样式 */
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  color: #7f8c8d;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
 @media (max-width: 768px) {
   .match-container {
     padding: 60px 16px 20px;

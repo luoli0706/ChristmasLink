@@ -9,13 +9,15 @@ import (
 
 // MatchPool 匹配池模型
 type MatchPool struct {
-	ID          uint      `json:"id" gorm:"primarykey"`
-	Name        string    `json:"name" gorm:"not null"`
-	Description string    `json:"description"`
-	ValidUntil  time.Time `json:"validUntil" gorm:"not null"`
-	Status      string    `json:"status" gorm:"default:active"` // active, expired, matched
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID            uint       `json:"id" gorm:"primarykey"`
+	Name          string     `json:"name" gorm:"not null"`
+	Description   string     `json:"description"`
+	ValidUntil    time.Time  `json:"validUntil" gorm:"not null"`
+	Status        string     `json:"status" gorm:"default:active"`  // active, expired, matched
+	CooldownTime  int        `json:"cooldownTime" gorm:"default:5"` // 冷却时间（秒）
+	LastMatchedAt *time.Time `json:"lastMatchedAt"`                 // 最后匹配时间
+	CreatedAt     time.Time  `json:"createdAt"`
+	UpdatedAt     time.Time  `json:"updatedAt"`
 
 	// 关联关系
 	Fields []PoolField `json:"fields" gorm:"foreignKey:PoolID;constraint:OnDelete:CASCADE"`
@@ -137,10 +139,11 @@ func (mp *MatchPair) AfterFind(tx *gorm.DB) error {
 
 // CreatePoolRequest 创建匹配池请求结构
 type CreatePoolRequest struct {
-	Name        string      `json:"name" binding:"required"`
-	Description string      `json:"description"`
-	ValidUntil  time.Time   `json:"validUntil" binding:"required"`
-	Fields      []PoolField `json:"fields" binding:"required"`
+	Name         string      `json:"name" binding:"required"`
+	Description  string      `json:"description"`
+	ValidUntil   time.Time   `json:"validUntil" binding:"required"`
+	CooldownTime int         `json:"cooldownTime"` // 冷却时间（秒），默认5秒
+	Fields       []PoolField `json:"fields" binding:"required"`
 }
 
 // JoinPoolRequest 加入匹配池请求结构
@@ -157,13 +160,15 @@ type StartMatchRequest struct {
 
 // PoolResponse 匹配池响应结构
 type PoolResponse struct {
-	ID          uint        `json:"id"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	UserCount   int64       `json:"userCount"`
-	ValidUntil  string      `json:"validUntil"`
-	Status      string      `json:"status"`
-	Fields      []PoolField `json:"fields"`
+	ID            uint        `json:"id"`
+	Name          string      `json:"name"`
+	Description   string      `json:"description"`
+	UserCount     int64       `json:"userCount"`
+	ValidUntil    string      `json:"validUntil"`
+	Status        string      `json:"status"`
+	CooldownTime  int         `json:"cooldownTime"`
+	LastMatchedAt *string     `json:"lastMatchedAt"`
+	Fields        []PoolField `json:"fields"`
 }
 
 // MatchResult 匹配结果结构

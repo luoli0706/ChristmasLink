@@ -3,6 +3,7 @@ package controllers
 import (
 	"christmas-link-backend/models"
 	"christmas-link-backend/services"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -133,6 +134,7 @@ func (pc *PoolController) JoinPool(c *gin.Context) {
 func (pc *PoolController) StartMatch(c *gin.Context) {
 	var req models.StartMatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("🚨 StartMatch JSON绑定错误: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "请求参数错误: " + err.Error(),
@@ -141,8 +143,10 @@ func (pc *PoolController) StartMatch(c *gin.Context) {
 		return
 	}
 
+	log.Printf("🎯 开始匹配请求: PoolID=%d", req.PoolID)
 	result, err := pc.poolService.StartMatch(&req)
 	if err != nil {
+		log.Printf("🚨 匹配失败: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": err.Error(),

@@ -30,12 +30,19 @@ func NewPoolService(db *gorm.DB) *PoolService {
 
 // CreatePool 创建匹配池
 func (s *PoolService) CreatePool(req *models.CreatePoolRequest) (*models.PoolResponse, error) {
+	// 设置默认冷却时间
+	cooldownTime := req.CooldownTime
+	if cooldownTime <= 0 {
+		cooldownTime = 5 // 默认5秒
+	}
+
 	pool := &models.MatchPool{
-		Name:        req.Name,
-		Description: req.Description,
-		ValidUntil:  req.ValidUntil,
-		Status:      "active",
-		Fields:      req.Fields,
+		Name:         req.Name,
+		Description:  req.Description,
+		ValidUntil:   req.ValidUntil,
+		CooldownTime: cooldownTime,
+		Status:       "active",
+		Fields:       req.Fields,
 	}
 
 	// 在事务中创建匹配池和字段
@@ -94,14 +101,23 @@ func (s *PoolService) GetPools() ([]models.PoolResponse, error) {
 	pools = make([]models.PoolResponse, len(dbPools))
 	for i, pool := range dbPools {
 		userCount := pool.GetUserCount(s.db)
+
+		var lastMatchedAtStr *string
+		if pool.LastMatchedAt != nil {
+			str := pool.LastMatchedAt.Format("2006-01-02 15:04:05")
+			lastMatchedAtStr = &str
+		}
+
 		pools[i] = models.PoolResponse{
-			ID:          pool.ID,
-			Name:        pool.Name,
-			Description: pool.Description,
-			UserCount:   userCount,
-			ValidUntil:  pool.ValidUntil.Format("2006-01-02 15:04:05"),
-			Status:      s.getPoolStatus(&pool),
-			Fields:      pool.Fields,
+			ID:            pool.ID,
+			Name:          pool.Name,
+			Description:   pool.Description,
+			UserCount:     userCount,
+			ValidUntil:    pool.ValidUntil.Format("2006-01-02 15:04:05"),
+			Status:        s.getPoolStatus(&pool),
+			CooldownTime:  pool.CooldownTime,
+			LastMatchedAt: lastMatchedAtStr,
+			Fields:        pool.Fields,
 		}
 	}
 
@@ -130,14 +146,23 @@ func (s *PoolService) GetPoolByID(id uint) (*models.PoolResponse, error) {
 	}
 
 	userCount := dbPool.GetUserCount(s.db)
+
+	var lastMatchedAtStr *string
+	if dbPool.LastMatchedAt != nil {
+		str := dbPool.LastMatchedAt.Format("2006-01-02 15:04:05")
+		lastMatchedAtStr = &str
+	}
+
 	pool = models.PoolResponse{
-		ID:          dbPool.ID,
-		Name:        dbPool.Name,
-		Description: dbPool.Description,
-		UserCount:   userCount,
-		ValidUntil:  dbPool.ValidUntil.Format("2006-01-02 15:04:05"),
-		Status:      s.getPoolStatus(&dbPool),
-		Fields:      dbPool.Fields,
+		ID:            dbPool.ID,
+		Name:          dbPool.Name,
+		Description:   dbPool.Description,
+		UserCount:     userCount,
+		ValidUntil:    dbPool.ValidUntil.Format("2006-01-02 15:04:05"),
+		Status:        s.getPoolStatus(&dbPool),
+		CooldownTime:  dbPool.CooldownTime,
+		LastMatchedAt: lastMatchedAtStr,
+		Fields:        dbPool.Fields,
 	}
 
 	// 缓存结果
@@ -194,6 +219,36 @@ func (s *PoolService) StartMatch(req *models.StartMatchRequest) (*models.MatchRe
 		return nil, fmt.Errorf("匹配池不存在")
 	}
 
+	// 检查匹配池状态和冷却时间
+	if pool.Status == "matched" {
+		if pool.LastMatchedAt != nil {
+			// 正常的冷却时间检查
+			cooldownDuration := time.Duration(pool.CooldownTime) * time.Second
+			timeElapsed := time.Since(*pool.LastMatchedAt)
+
+			if timeElapsed < cooldownDuration {
+				remainingTime := cooldownDuration - timeElapsed
+				return nil, fmt.Errorf("匹配池正在冷却中，还需等待 %.1f 秒", remainingTime.Seconds())
+			}
+
+			// 冷却时间结束，重置状态
+			log.Printf("🔄 匹配池 %s 冷却时间结束，重置为active状态", pool.Name)
+		} else {
+			// 处理遗留数据：status为matched但LastMatchedAt为null的情况
+			log.Printf("🔧 发现遗留数据：匹配池 %s 状态为matched但LastMatchedAt为null，重置为active状态", pool.Name)
+		}
+
+		pool.Status = "active"
+		if err := s.db.Save(&pool).Error; err != nil {
+			return nil, fmt.Errorf("重置匹配池状态失败: %v", err)
+		}
+	}
+
+	// 检查匹配池是否可用
+	if pool.Status != "active" {
+		return nil, fmt.Errorf("匹配池当前状态不可用: %s", pool.Status)
+	}
+
 	// 获取所有用户
 	var users []models.PoolUser
 	if err := s.db.Where("pool_id = ?", req.PoolID).Find(&users).Error; err != nil {
@@ -217,6 +272,7 @@ func (s *PoolService) StartMatch(req *models.StartMatchRequest) (*models.MatchRe
 		Status:      "completed",
 	}
 
+	now := time.Now()
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// 创建匹配记录
 		if err := tx.Create(record).Error; err != nil {
@@ -231,12 +287,18 @@ func (s *PoolService) StartMatch(req *models.StartMatchRequest) (*models.MatchRe
 			}
 		}
 
-		// 更新匹配池状态
-		return tx.Model(&pool).Update("status", "matched").Error
+		// 更新匹配池状态和最后匹配时间
+		pool.Status = "matched"
+		pool.LastMatchedAt = &now
+		if err := tx.Save(&pool).Error; err != nil {
+			return err
+		}
+
+		return nil
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("保存匹配记录失败: %v", err)
 	}
 
 	// 构建返回结果
@@ -374,10 +436,25 @@ func (s *PoolService) getPoolStatus(pool *models.MatchPool) string {
 	if pool.IsExpired() {
 		return "expired"
 	}
-	return pool.Status
-}
 
-// GetPoolUsers 获取匹配池用户列表（带缓存）
+	// 如果状态是matched，检查冷却时间
+	if pool.Status == "matched" {
+		// 如果没有lastMatchedAt记录，说明是旧数据，应该重置为active
+		if pool.LastMatchedAt == nil {
+			return "active"
+		}
+
+		cooldownDuration := time.Duration(pool.CooldownTime) * time.Second
+		timeElapsed := time.Since(*pool.LastMatchedAt)
+
+		// 如果冷却时间已过，应该返回active状态
+		if timeElapsed >= cooldownDuration {
+			return "active"
+		}
+	}
+
+	return pool.Status
+} // GetPoolUsers 获取匹配池用户列表（带缓存）
 func (s *PoolService) GetPoolUsers(poolID uint) ([]models.PoolUser, error) {
 	cacheKey := cache.GeneratePoolUsersKey(int(poolID))
 
