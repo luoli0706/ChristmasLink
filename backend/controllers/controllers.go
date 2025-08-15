@@ -307,3 +307,78 @@ func (uc *UserController) RemoveUser(c *gin.Context) {
 		"data":    nil,
 	})
 }
+
+// AdminController 管理员控制器
+type AdminController struct {
+	historyService *services.HistoryService
+}
+
+// NewAdminController 创建管理员控制器实例
+func NewAdminController(db *gorm.DB) *AdminController {
+	return &AdminController{
+		historyService: services.NewHistoryService(db),
+	}
+}
+
+// AdminLogin 管理员登录验证
+func (ac *AdminController) AdminLogin(c *gin.Context) {
+	var req models.AdminLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "请求参数错误",
+			"data":    nil,
+		})
+		return
+	}
+
+	// 验证管理员密码
+	if req.Password != "QiShiJi7776" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "密码错误",
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "管理员登录成功",
+		"data": gin.H{
+			"isAdmin": true,
+			"token":   "admin_authenticated", // 简单的令牌
+		},
+	})
+}
+
+// GetAdminHistory 获取管理员完整历史记录（包含所有用户信息）
+func (ac *AdminController) GetAdminHistory(c *gin.Context) {
+	// 验证管理员权限
+	authHeader := c.GetHeader("Authorization")
+	if authHeader != "Bearer admin_authenticated" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"message": "需要管理员权限",
+			"data":    nil,
+		})
+		return
+	}
+
+	// 获取完整历史记录
+	history, err := ac.historyService.GetFullHistory()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "获取历史记录失败: " + err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "获取管理员历史记录成功",
+		"data":    history,
+	})
+}

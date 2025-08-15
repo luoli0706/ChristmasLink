@@ -42,6 +42,7 @@ func main() {
 	poolController := controllers.NewPoolController(database.GetDB())
 	historyController := controllers.NewHistoryController(database.GetDB())
 	userController := controllers.NewUserController(database.GetDB())
+	adminController := controllers.NewAdminController(database.GetDB())
 
 	// 基础健康检查端点
 	r.GET("/", func(c *gin.Context) {
@@ -90,6 +91,13 @@ func main() {
 		{
 			users.POST("/search", userController.SearchUsers)
 			users.DELETE("/:id", userController.RemoveUser)
+		}
+
+		// 管理员路由
+		admin := api.Group("/admin")
+		{
+			admin.POST("/login", adminController.AdminLogin)
+			admin.GET("/history", adminController.GetAdminHistory)
 		}
 	}
 

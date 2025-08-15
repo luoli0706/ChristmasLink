@@ -330,3 +330,116 @@
     justify-content: center;
   }
 }
+
+/* 管理员相关样式 */
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.admin-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-badge {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.logout-button {
+  background: var(--color-secondary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background: #c0392b;
+}
+
+/* 匿名化样式 */
+.privacy-notice {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.privacy-notice p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.admin-link {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.admin-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.pair-detail-card.anonymous {
+  border: 2px solid var(--color-primary);
+}
+
+.user-detail.current-user {
+  border: 2px solid #27ae60;
+  background: rgba(39, 174, 96, 0.1);
+}
+
+.user-detail.matched-user {
+  border: 2px solid #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.anonymous-data p {
+  position: relative;
+}
+
+.surprise-hint {
+  text-align: center;
+  margin-top: 12px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+}
+
+.surprise-hint small {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* 管理员专用配对卡片 */
+.admin-pair {
+  border: 2px solid #8e44ad;
+  background: rgba(142, 68, 173, 0.05);
+}
+
+.details-header .admin-notice {
+  color: #8e44ad;
+  font-weight: 600;
+  font-size: 0.9rem;
+}

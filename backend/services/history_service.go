@@ -129,6 +129,69 @@ func (s *HistoryService) getUserDisplayName(userData map[string]interface{}) str
 	return "匿名用户"
 }
 
+// VerifyAdminPassword 验证管理员密码
+func (s *HistoryService) VerifyAdminPassword(password string) bool {
+	// 预设密码：QiShiJi7776
+	expectedPassword := "QiShiJi7776"
+	return password == expectedPassword
+}
+
+// GetHistoryByIDForAdmin 管理员获取历史记录详情（显示完整信息）
+func (s *HistoryService) GetHistoryByIDForAdmin(id uint) (*models.MatchResult, error) {
+	// 直接调用原有方法，返回完整信息
+	return s.GetHistoryByID(id)
+}
+
+// GetHistoryByIDAnonymous 匿名获取历史记录详情（隐藏敏感信息）
+func (s *HistoryService) GetHistoryByIDAnonymous(id uint, userIdentifier string) (*models.MatchResult, error) {
+	// 获取完整结果
+	fullResult, err := s.GetHistoryByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建匿名版本
+	anonymousResult := &models.MatchResult{
+		PoolName:   fullResult.PoolName,
+		TotalUsers: fullResult.TotalUsers,
+		Pairs:      make([]models.MatchPairResult, 0),
+		Timestamp:  fullResult.Timestamp,
+	}
+
+	// 只返回与指定用户相关的配对信息，且隐藏对方信息
+	for _, pair := range fullResult.Pairs {
+		if pair.User1 == userIdentifier {
+			// 用户是第一个用户
+			anonymousPair := models.MatchPairResult{
+				Pair:      pair.Pair,
+				User1:     pair.User1,
+				User1Data: pair.User1Data,
+			}
+			if pair.User2 != "" {
+				anonymousPair.User2 = "您的匹配对象"
+				anonymousPair.User2Data = map[string]interface{}{
+					"status": "已匹配",
+				}
+			}
+			anonymousResult.Pairs = append(anonymousResult.Pairs, anonymousPair)
+		} else if pair.User2 == userIdentifier {
+			// 用户是第二个用户
+			anonymousPair := models.MatchPairResult{
+				Pair:  pair.Pair,
+				User1: "您的匹配对象",
+				User1Data: map[string]interface{}{
+					"status": "已匹配",
+				},
+				User2:     pair.User2,
+				User2Data: pair.User2Data,
+			}
+			anonymousResult.Pairs = append(anonymousResult.Pairs, anonymousPair)
+		}
+	}
+
+	return anonymousResult, nil
+}
+
 // GetStatistics 获取统计信息（带缓存）
 func (s *HistoryService) GetStatistics() (map[string]interface{}, error) {
 	// 尝试从缓存获取
@@ -162,4 +225,29 @@ func (s *HistoryService) GetStatistics() (map[string]interface{}, error) {
 	log.Println("📊 从数据库获取统计信息，已缓存")
 
 	return stats, nil
+}
+
+// GetFullHistory 获取完整的历史记录（管理员专用，包含所有用户信息）
+func (s *HistoryService) GetFullHistory() ([]models.HistoryRecord, error) {
+	// 从数据库查询，不使用缓存（确保实时性）
+	var records []models.MatchRecord
+	if err := s.db.Order("matched_at DESC").Find(&records).Error; err != nil {
+		return nil, err
+	}
+
+	// 转换为响应格式，包含完整用户信息
+	history := make([]models.HistoryRecord, len(records))
+	for i, record := range records {
+		history[i] = models.HistoryRecord{
+			ID:          record.ID,
+			PoolName:    record.PoolName,
+			MatchDate:   record.MatchedAt.Format("2006-01-02 15:04:05"),
+			TotalUsers:  record.TotalUsers,
+			PairsCount:  record.PairsCount,
+			HasLoneUser: record.HasLoneUser,
+		}
+	}
+
+	log.Printf("📚 获取完整历史记录 %d 条（管理员）", len(history))
+	return history, nil
 }

@@ -4,6 +4,8 @@ import Match from '../pages/Match';
 import Register from '../pages/Register';
 import History from '../pages/History';
 import Remove from '../pages/Remove';
+import AdminLogin from '../pages/AdminLogin';
+import AdminHistory from '../pages/AdminHistory';
 
 export const routes: RouteConfig[] = [
   {
@@ -30,6 +32,16 @@ export const routes: RouteConfig[] = [
     path: '/remove',
     component: Remove,
     title: '移除用户',
+  },
+  {
+    path: '/admin-login',
+    component: AdminLogin,
+    title: '管理员登录',
+  },
+  {
+    path: '/admin-history',
+    component: AdminHistory,
+    title: '管理员历史记录',
   },
 ];
 

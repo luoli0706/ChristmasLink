@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
+import { useRouter } from '../components/Router';
 import '../styles/History.css';
 
 interface MatchRecord {
@@ -35,6 +36,7 @@ const History: React.FC<HistoryProps> = () => {
   const [matchDetails, setMatchDetails] = useState<MatchDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { navigate } = useRouter();
 
   // 解析时间字符串的辅助函数
   const parseDateTime = (dateTimeStr: string): Date => {
@@ -199,16 +201,25 @@ const History: React.FC<HistoryProps> = () => {
         
         <div className="pairs-detail">
           <h3>配对详情</h3>
+          <div className="privacy-notice">
+            <p>🎁 为保持惊喜，仅显示您的匹配对象信息，身份已匿名化</p>
+            <button 
+              onClick={() => navigate('/admin-login')} 
+              className="admin-link"
+            >
+              管理员登录
+            </button>
+          </div>
           {matchDetails ? (
             <div className="pairs-list">
               {matchDetails.pairs.map((pair) => (
-                <div key={pair.pair} className="pair-detail-card">
+                <div key={pair.pair} className="pair-detail-card anonymous">
                   <div className="pair-header">
                     <h4>配对 {pair.pair}</h4>
                   </div>
                   <div className="pair-content">
-                    <div className="user-detail">
-                      <h5>{pair.user1}</h5>
+                    <div className="user-detail current-user">
+                      <h5>您的信息</h5>
                       <div className="user-data">
                         {Object.entries(pair.user1Data || {}).map(([key, value]) => (
                           <p key={key}><strong>{key}:</strong> {String(value)}</p>
@@ -219,12 +230,23 @@ const History: React.FC<HistoryProps> = () => {
                     {pair.user2 && pair.user2Data ? (
                       <>
                         <div className="pair-connector">💝</div>
-                        <div className="user-detail">
-                          <h5>{pair.user2}</h5>
-                          <div className="user-data">
-                            {Object.entries(pair.user2Data).map(([key, value]) => (
-                              <p key={key}><strong>{key}:</strong> {String(value)}</p>
-                            ))}
+                        <div className="user-detail matched-user">
+                          <h5>您的匹配对象</h5>
+                          <div className="user-data anonymous-data">
+                            {Object.entries(pair.user2Data).map(([key, value]) => {
+                              // 隐藏cn字段（中文姓名）和其他身份信息
+                              if (key === 'cn' || key === 'name' || key === 'username') {
+                                return (
+                                  <p key={key}><strong>{key}:</strong> ***（已隐藏）</p>
+                                );
+                              }
+                              return (
+                                <p key={key}><strong>{key}:</strong> {String(value)}</p>
+                              );
+                            })}
+                          </div>
+                          <div className="surprise-hint">
+                            <small>🎄 身份信息已隐藏以保持惊喜</small>
                           </div>
                         </div>
                       </>

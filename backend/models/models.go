@@ -193,3 +193,8 @@ type HistoryRecord struct {
 	HasLoneUser bool   `json:"hasLoneUser"`
 	Status      string `json:"status"`
 }
+
+// AdminLoginRequest 管理员登录请求
+type AdminLoginRequest struct {
+	Password string `json:"password" binding:"required"`
+}
