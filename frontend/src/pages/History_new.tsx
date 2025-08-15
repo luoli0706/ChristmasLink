@@ -273,7 +273,7 @@ const History: React.FC<HistoryProps> = () => {
                       <table className="users-table">
                         <thead>
                           <tr>
-                            <th>你的信息</th>
+                            <th>我的信息</th>
                             <th>匹配对象信息</th>
                             <th>匹配状态</th>
                           </tr>

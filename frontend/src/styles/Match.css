@@ -354,6 +354,220 @@
   font-style: italic;
 }
 
+/* 用户表格样式 */
+.users-result {
+  margin-bottom: 32px;
+}
+
+.users-result h3 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.users-table-container {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.users-table th {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.users-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.users-table tr:hover {
+  background-color: var(--bg-primary);
+}
+
+.user-info {
+  min-width: 200px;
+}
+
+.user-info strong {
+  color: var(--text-primary);
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.user-details, .partner-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-item {
+  display: flex;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.detail-key {
+  color: var(--text-secondary);
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.detail-value {
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.partner-info {
+  min-width: 200px;
+}
+
+.partner-info strong {
+  color: var(--christmas-green);
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.anonymity-notice {
+  margin-top: 8px;
+  padding: 4px 8px;
+  background-color: rgba(52, 152, 219, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #3498db;
+}
+
+.anonymity-notice small {
+  color: #3498db;
+  font-style: italic;
+}
+
+.no-partner {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.match-details {
+  text-align: center;
+}
+
+.alone-indicator {
+  color: var(--christmas-red);
+  font-weight: 600;
+}
+
+.paired-indicator {
+  color: var(--christmas-green);
+  font-weight: 600;
+}
+
+.user-status {
+  text-align: center;
+}
+
+.status-alone {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--christmas-red);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-paired {
+  background-color: rgba(46, 204, 113, 0.1);
+  color: var(--christmas-green);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* 分页样式 */
+.pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.pagination-info {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-btn {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--christmas-green);
+  color: white;
+  border-color: var(--christmas-green);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.page-number {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  text-align: center;
+}
+
+.page-number:hover {
+  background-color: var(--christmas-green);
+  color: white;
+  border-color: var(--christmas-green);
+}
+
+.page-number.active {
+  background-color: var(--christmas-green);
+  color: white;
+  border-color: var(--christmas-green);
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .match-container {
     padding: 60px 16px 20px;
@@ -375,5 +589,29 @@
   
   .result-actions {
     flex-direction: column;
+  }
+
+  .users-table-container {
+    padding: 12px;
+  }
+
+  .users-table {
+    font-size: 0.8rem;
+  }
+
+  .users-table th,
+  .users-table td {
+    padding: 8px 12px;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .page-numbers {
+    order: -1;
+    width: 100%;
+    justify-content: center;
   }
 }
