@@ -1,6 +1,32 @@
 // API 配置
 const isDevelopment = import.meta.env.DEV;
-export const API_BASE_URL = isDevelopment ? '' : 'http://127.0.0.1:7776';
+const isProduction = import.meta.env.PROD;
+
+// 根据环境确定API基础URL
+export const API_BASE_URL = (() => {
+  // 优先使用环境变量配置
+  if (import.meta.env.VITE_API_BASE_URL !== undefined) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // 回退到默认配置
+  if (isDevelopment) {
+    // 开发环境：使用代理
+    return '';
+  } else if (isProduction) {
+    // 生产环境：使用云服务器公网IP
+    return 'http://117.72.61.26:7776';
+  } else {
+    // 预览模式：使用本地服务器
+    return 'http://127.0.0.1:7776';
+  }
+})();
+
+// 调试信息
+if (import.meta.env.VITE_DEBUG === 'true') {
+  console.log('API_BASE_URL:', API_BASE_URL);
+  console.log('Environment:', isDevelopment ? 'development' : isProduction ? 'production' : 'preview');
+}
 
 // API 端点
 export const API_ENDPOINTS = {
