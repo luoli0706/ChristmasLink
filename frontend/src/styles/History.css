@@ -443,3 +443,94 @@
   font-weight: 600;
   font-size: 0.9rem;
 }
+
+/* 用户视角卡片样式 */
+.user-views {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-view-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid var(--color-primary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.user-view-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.user-view-header h5 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.match-info {
+  margin-top: 12px;
+}
+
+.partner-info h6 {
+  margin: 0 0 8px 0;
+  color: #e74c3c;
+  font-size: 1rem;
+}
+
+.partner-data {
+  background: rgba(231, 76, 60, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+}
+
+.partner-data p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+.hidden-field {
+  color: #95a5a6;
+  font-style: italic;
+}
+
+.no-match {
+  text-align: center;
+  padding: 20px;
+  background: rgba(243, 156, 18, 0.1);
+  border-radius: 8px;
+  color: #f39c12;
+}
+
+.surprise-hint {
+  text-align: center;
+  margin-top: 8px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+}
+
+.surprise-hint small {
+  color: #7f8c8d;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+/* 注册页面样式增强 */
+.primary-field {
+  background: rgba(39, 174, 96, 0.1);
+  border: 2px solid #27ae60;
+}
+
+.field-primary {
+  background: #27ae60;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}

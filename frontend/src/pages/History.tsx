@@ -202,7 +202,7 @@ const History: React.FC<HistoryProps> = () => {
         <div className="pairs-detail">
           <h3>配对详情</h3>
           <div className="privacy-notice">
-            <p>🎁 为保持惊喜，仅显示您的匹配对象信息，身份已匿名化</p>
+            <p>🎁 以cn为主视角显示匹配结果，对方身份信息已匿名化</p>
             <button 
               onClick={() => navigate('/admin-login')} 
               className="admin-link"
@@ -212,53 +212,85 @@ const History: React.FC<HistoryProps> = () => {
           </div>
           {matchDetails ? (
             <div className="pairs-list">
-              {matchDetails.pairs.map((pair) => (
-                <div key={pair.pair} className="pair-detail-card anonymous">
-                  <div className="pair-header">
-                    <h4>配对 {pair.pair}</h4>
-                  </div>
-                  <div className="pair-content">
-                    <div className="user-detail current-user">
-                      <h5>您的信息</h5>
-                      <div className="user-data">
-                        {Object.entries(pair.user1Data || {}).map(([key, value]) => (
-                          <p key={key}><strong>{key}:</strong> {String(value)}</p>
-                        ))}
+              {matchDetails.pairs.map((pair) => {
+                // 为每个用户创建一个视角
+                const createUserView = (userName: string, userData: any, partnerName: string | undefined, partnerData: any) => {
+                  if (!userData || !userData.cn) return null;
+                  
+                  return (
+                    <div key={`${userName}-view`} className="user-view-card">
+                      <div className="user-view-header">
+                        <h5>👤 {userData.cn} 的匹配结果</h5>
+                      </div>
+                      <div className="match-info">
+                        {partnerName && partnerData ? (
+                          <div className="partner-info">
+                            <h6>🎯 匹配对象信息：</h6>
+                            <div className="partner-data">
+                              {Object.entries(partnerData).map(([key, value]) => {
+                                // 隐藏对方的cn字段，显示其他所有信息
+                                if (key === 'cn') {
+                                  return (
+                                    <p key={key} className="hidden-field">
+                                      <strong>{key}:</strong> ***（已隐藏）
+                                    </p>
+                                  );
+                                }
+                                return (
+                                  <p key={key}>
+                                    <strong>{key}:</strong> {String(value)}
+                                  </p>
+                                );
+                              })}
+                            </div>
+                            <div className="surprise-hint">
+                              <small>🎄 对方姓名已隐藏以保持惊喜</small>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="no-match">
+                            <p>🎄 单独用户，未匹配到对象</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    
-                    {pair.user2 && pair.user2Data ? (
-                      <>
-                        <div className="pair-connector">💝</div>
-                        <div className="user-detail matched-user">
-                          <h5>您的匹配对象</h5>
-                          <div className="user-data anonymous-data">
-                            {Object.entries(pair.user2Data).map(([key, value]) => {
-                              // 隐藏cn字段（中文姓名）和其他身份信息
-                              if (key === 'cn' || key === 'name' || key === 'username') {
-                                return (
-                                  <p key={key}><strong>{key}:</strong> ***（已隐藏）</p>
-                                );
-                              }
-                              return (
-                                <p key={key}><strong>{key}:</strong> {String(value)}</p>
-                              );
-                            })}
-                          </div>
-                          <div className="surprise-hint">
-                            <small>🎄 身份信息已隐藏以保持惊喜</small>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="lone-user">
-                        <div className="lone-user-indicator">🎄</div>
-                        <p>单独用户</p>
-                      </div>
-                    )}
+                  );
+                };
+
+                // 生成每个用户的视角
+                const views = [];
+                
+                // 用户1的视角
+                if (pair.user1Data?.cn) {
+                  views.push(createUserView(
+                    pair.user1, 
+                    pair.user1Data, 
+                    pair.user2, 
+                    pair.user2Data
+                  ));
+                }
+                
+                // 用户2的视角（如果存在）
+                if (pair.user2 && pair.user2Data?.cn) {
+                  views.push(createUserView(
+                    pair.user2, 
+                    pair.user2Data, 
+                    pair.user1, 
+                    pair.user1Data
+                  ));
+                }
+
+                return (
+                  <div key={pair.pair} className="pair-detail-card anonymous">
+                    <div className="pair-header">
+                      <h4>配对 {pair.pair}</h4>
+                    </div>
+                    <div className="user-views">
+                      {views}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="loading-pairs">

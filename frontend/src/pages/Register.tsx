@@ -68,7 +68,14 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     name: '',
     validUntil: '',
     description: '',
-    fields: [] as PoolField[]
+    fields: [
+      {
+        name: 'cn',
+        label: '中文姓名',
+        type: 'text' as const,
+        required: true
+      }
+    ] as PoolField[]
   });
   
   const [newField, setNewField] = useState<PoolField>({
@@ -84,6 +91,12 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const addField = () => {
     if (!newField.name.trim() || !newField.label.trim()) {
       setMessage({ type: 'error', text: '字段名称和标签不能为空' });
+      return;
+    }
+
+    // 防止添加cn字段（已经是必填字段）
+    if (newField.name === 'cn') {
+      setMessage({ type: 'error', text: 'cn字段已存在且为必填字段，无法重复添加' });
       return;
     }
 
@@ -108,6 +121,12 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const removeField = (index: number) => {
+    // 防止删除cn字段（索引0）
+    if (index === 0) {
+      setMessage({ type: 'error', text: 'cn字段为必填主键，无法删除' });
+      return;
+    }
+    
     setPoolForm(prev => ({
       ...prev,
       fields: prev.fields.filter((_, i) => i !== index)
@@ -155,7 +174,14 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         name: '',
         validUntil: '',
         description: '',
-        fields: []
+        fields: [
+          {
+            name: 'cn',
+            label: '中文姓名',
+            type: 'text' as const,
+            required: true
+          }
+        ]
       });
       
     } catch (error) {
@@ -292,20 +318,22 @@ const CreatePoolForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <div className="fields-list">
                 <h4>已添加的字段</h4>
                 {poolForm.fields.map((field, index) => (
-                  <div key={index} className="field-item">
+                  <div key={index} className={`field-item ${field.name === 'cn' ? 'primary-field' : ''}`}>
                     <div className="field-info">
                       <span className="field-name">{field.name}</span>
                       <span className="field-label">({field.label})</span>
                       <span className="field-type">[{field.type}]</span>
                       {field.required && <span className="field-required">*必填</span>}
+                      {field.name === 'cn' && <span className="field-primary">主键</span>}
                     </div>
                     <button
                       type="button"
                       onClick={() => removeField(index)}
                       className="btn btn-danger btn-sm"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || field.name === 'cn'}
+                      title={field.name === 'cn' ? 'cn字段为必填主键，无法删除' : ''}
                     >
-                      删除
+                      {field.name === 'cn' ? '锁定' : '删除'}
                     </button>
                   </div>
                 ))}
