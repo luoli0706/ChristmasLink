@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/christmas_link.db
+
+# Docker
+front-docker/
+
+# Build artifacts and executables
+*.exe
+*.dll
+*.so
+*.dylib
+christmaslink
+christmas-link-backend
+christmas-link-backend.exe
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# All script files (bash, batch, service files)
+*.sh
+*.bat
+*.service
+
+# Deployment and daemon files
+backend-daemon*
+christmaslink-backend-*
+deploy-*
+start-*
+upload-*

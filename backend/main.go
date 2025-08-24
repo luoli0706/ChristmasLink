@@ -114,8 +114,8 @@ func main() {
 	}()
 
 	// 启动服务器
-	port := ":7776" // 与前端API配置保持一致
-	log.Printf("🎄 Christmas Link Backend starting on http://127.0.0.1%s", port)
+	port := "0.0.0.0:7776" // 明确绑定 IPv4 地址，与前端API配置保持一致
+	log.Printf("🎄 Christmas Link Backend starting on http://127.0.0.1:7776", )
 	log.Println("📋 Available endpoints:")
 	log.Println("   GET  /                 - Health check")
 	log.Println("   POST /api/pools        - Create pool")
